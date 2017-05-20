@@ -1,0 +1,65 @@
+        var a = 1;
+
+        var b = 1, c = 2;
+
+        var d;
+
+        var e = 1,
+            f;
+
+        function A() {
+
+        }
+
+        function B() {
+
+        }
+
+        function C() {
+
+        }
+
+        var X = function() {
+
+        };
+
+        var Y = function() {
+
+        };
+
+        var Z = function() {
+
+        };
+
+        var P = function() {
+
+        };
+
+        var Obj = {
+            k1: function() {
+                // yo
+            },
+            k2: ('hello'),
+            k3: {
+                kk1: 1,
+                kk2: function () {
+                    // hmm
+                },
+                kk4: []
+            },
+            P: P
+        };
+
+        var Class = function() {
+            console.log(1);
+        };
+
+        Class.prototype.foo = function() {
+            console.log(2);
+        };
+
+        Class.bar = function() {
+
+        };
+
+        return Class;

@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "baseUrl": "./src",
+    "noImplicitAny": false,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "outDir": "src/ts-out",
+    "lib" : ["es5", "es6"],
+    "paths": {
+      "translations": ["resources/strings/strings"]
+    }
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "compileOnSave": true
+}

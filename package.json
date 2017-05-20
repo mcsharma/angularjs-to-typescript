@@ -1,0 +1,21 @@
+{
+  "name": "blink-js2ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": "./cli.js",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^4.17.4"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.5.47",
+    "@types/lodash": "^4.14.64",
+    "jasmine": "^2.6.0",
+    "typescript": "^2.3.2"
+  }
+}

@@ -1,0 +1,60 @@
+let a = 1;
+let b = 1;
+let c = 2;
+let d = undefined;
+let e = 1;
+let f = undefined;
+
+function A () {
+
+          }
+
+function B () {
+
+          }
+
+function C () {
+
+          }
+function  () {
+
+          }
+function  () {
+
+          }
+function  () {
+
+          }
+function  () {
+
+          }
+let Obj = {
+k1: function  () {
+                // yo
+              },
+k2: ('hello'),
+k3: {
+kk1: 1,
+kk2: function  () {
+                    // hmm
+                  },
+kk4: []},
+P: P};
+
+@Provide('foo')
+class Class {
+
+constructor () {
+            console.log(1);
+          }
+ public static bar() {
+
+          }
+public foo() {
+            console.log(2);
+          }
+}
+
+export {
+Class
+}
