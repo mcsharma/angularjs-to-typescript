@@ -2,3 +2,4 @@ node_modules/
 .DS_Store
 .idea/
 main.js
+src/ts-out/
