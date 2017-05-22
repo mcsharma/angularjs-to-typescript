@@ -1,3 +1,4 @@
+#!/usr/bin/env 
 var fs = require('fs');
 var BlinkJS2TS = require('./src/ts-out/BlinkJS2TS');
 
