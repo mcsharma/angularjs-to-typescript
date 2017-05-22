@@ -5,8 +5,7 @@
   "main": "index.js",
   "bin": "./cli.js",
   "scripts": {
-    "test": "jasmine",
-    "install": "tsc -p ./"
+    "test": "jasmine"
   },
   "author": "",
   "license": "ISC",

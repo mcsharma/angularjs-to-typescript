@@ -1,7 +1,4 @@
 node_modules/
 .DS_Store
 .idea/
-ts-out/
 main.js
-src/input.js
-src/output.ts
