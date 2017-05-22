@@ -314,7 +314,9 @@ export function minifyCommentsRegexAndStrings(
             } else {
                 let lastNonWhitespaceChart = ans.match(/([^\s]?)\s*$/)[1];
                 if (lastNonWhitespaceChart == ')') {
-                    throw new Error('not implemented');
+                    // TODO: It could be regex, assume for now it's a division operation.
+                    ans += ch;
+                    index++;
                 } else if (lastNonWhitespaceChart.match(/[_\w]/)) {
                     // definitely division operation
                     ans += ch;

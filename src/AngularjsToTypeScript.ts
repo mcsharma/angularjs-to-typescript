@@ -5,8 +5,8 @@ import {
 
 import JS2TS = require('./JS2TS');
 
-class BlinkJS2TS {
-    public run(input: string): string {
+class AngularjsToTypeScript {
+    public run(input: string): string|number {
         let ret = processCode(input);
         let nodeIdToNode = ret.table;
         let code = ret.code;
@@ -28,7 +28,8 @@ class BlinkJS2TS {
             var match = str.match(new RegExp("^blink\\.app\\.factory\\s*(" + roundBlockRegex + ")$"));
             if (match) {
                 if (factoryFound) {
-                    throw new Error('Only supports one factory per file!');
+                    console.log('More than 1 factory present! exiting!');
+                    return -1;
                 }
                 let roundBlock = nodeIdToNode[match[1]] as SimpleCodeBlock;
                 let stringBlockRegex = GetRegexToMatchBlock(Blocks.STRING).source;
@@ -40,7 +41,7 @@ class BlinkJS2TS {
                     throw new Error('invalid format of factory!');
                 }
 
-                let moduleName = BlinkJS2TS.stripQuotes(
+                let moduleName = AngularjsToTypeScript.stripQuotes(
                     (nodeIdToNode[match2[1]] as SimpleCodeBlock).code
                 );
                 let depsArray = (nodeIdToNode[match2[2]] as SimpleCodeBlock).code
@@ -59,7 +60,7 @@ class BlinkJS2TS {
                         if (!IsBlockID(dep, Blocks.STRING)) {
                             throw new Error('invalid format of factory!');
                         }
-                        deps.push(BlinkJS2TS.stripQuotes(
+                        deps.push(AngularjsToTypeScript.stripQuotes(
                             (nodeIdToNode[dep] as SimpleCodeBlock).code
                         ));
                     }
@@ -79,7 +80,13 @@ class BlinkJS2TS {
                 continue;
             }
 
-            throw new Error('global code present in the file!');
+            console.log('Unhandled code present at top level. Exiting!');
+            return -1;
+        }
+
+        if (!factoryFound) {
+            console.log('No factory found! Exiting');
+            return -1;
         }
 
         return expandCodeRecursive(output, nodeIdToNode);
@@ -90,4 +97,4 @@ class BlinkJS2TS {
     }
 }
 
-export = BlinkJS2TS;
+export = AngularjsToTypeScript;

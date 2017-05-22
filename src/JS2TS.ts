@@ -35,12 +35,24 @@ class JS2TS {
         let ret = processCode(input);
         this.nodeIdToNode = ret.table;
 
-        let code = ret.code;
+        let code = ret.code, codeCopy = code;
         let split;
         let scope: any = {};
         let order = [];
         let exportedToken;
         let inheritance: {[derivedClass: string]: string} = {};
+
+        // process all the functions first. So that they are available in the scope since the
+        // beginning
+        while (split = getNextInstruction(codeCopy)) {
+            let str = split.instruction;
+            codeCopy = split.remain;
+            // function foo() {..}
+            if (IsBlockID(str, Blocks.FUNCTION)) {
+                scope[(this.nodeIdToNode[str] as FunctionBlock).functionName] = str;
+            }
+        }
+
 
         let currentCommentList: string[] = [],
             lastCommentList: string[] = [];
@@ -130,7 +142,7 @@ class JS2TS {
                 continue;
             }
 
-            console.log('unhandled instruction: ', str);
+   //         console.log('unhandled instruction: ', str);
         }
 
         _.forEach(scope, (val, name) => {
@@ -285,7 +297,7 @@ class JS2TS {
                 curObj[prop] = val;
                 return;
             }
-            if (!curObj[prop]) throw new Error('Invalid Key');
+            if (!curObj[prop]) throw new Error('Accessing an object that is not present in scope!');
             curObj = curObj[prop];
             if (_.isString(curObj)) {
                 if (!IsBlockID(curObj, Blocks.FUNCTION)) {

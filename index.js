@@ -1,1 +1,1 @@
-module.exports = require('./src/ts-out/BlinkJS2TS');
+module.exports = require('./src/ts-out/AngularjsToTypeScript');

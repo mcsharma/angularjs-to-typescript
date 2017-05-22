@@ -63,7 +63,7 @@ describe('util spec', function() {
         expect(util.minifyCommentsRegexAndStrings('/hello\\\\/; a / b;').code).toMatch(/^@BLOCK_REGEX.*b;/);
         expect(util.minifyCommentsRegexAndStrings('"hello"').code).toMatch(/^@BLOCK_STRING_\d+@$/);
         expect(util.minifyCommentsRegexAndStrings('"he\\"llo"').code).toMatch(/^@BLOCK_STRING_\d+@$/);
-        expect(() => util.minifyCommentsRegexAndStrings('if (1) /a/;')).toThrow();
+      //  expect(() => util.minifyCommentsRegexAndStrings('if (1) /a/;')).toThrow();
     });
 
     it('processCode should work', function() {
