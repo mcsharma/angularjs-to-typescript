@@ -214,8 +214,14 @@ class JS2TS {
 
         let output = '';
 
-
-        order.forEach((name) => {
+        // Define all the variables first and then classes and functions.
+        order.sort((name1, name2) => {
+            let is1Func = IsBlockID(scope[name1], Blocks.CLASS) ||
+                IsBlockID(scope[name1], Blocks.FUNCTION);
+            let is2Func = IsBlockID(scope[name2], Blocks.CLASS) ||
+                IsBlockID(scope[name2], Blocks.FUNCTION);
+            return is1Func && !is2Func ? 1 : -1;
+        }).forEach((name) => {
             if (IsBlockID(scope[name], Blocks.CLASS)) {
                 output += '\n';
                 if (annotations[name]) {

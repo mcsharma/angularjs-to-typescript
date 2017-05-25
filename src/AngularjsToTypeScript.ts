@@ -24,7 +24,13 @@ class AngularjsToTypeScript {
                 output += str + '\n';
                 continue;
             }
+
             let roundBlockRegex = GetRegexToMatchBlock(Blocks.ROUNDBLOCK).source;
+            if (str.match(new RegExp("add(Boolean|Number|String)Flag\\s*" + roundBlockRegex + "$"))) {
+                output += str + ';\n';
+                continue;
+            }
+
             var match = str.match(new RegExp("^blink\\.app\\.factory\\s*(" + roundBlockRegex + ")$"));
             if (match) {
                 if (factoryFound) {
@@ -66,16 +72,21 @@ class AngularjsToTypeScript {
                     }
                 });
 
-                output += '\n' + deps.map(dep => {
-                        return `let ${dep} = ngRequire('${dep}');`;
-                    }).join('\n');
-                output += '\n\n';
+                let decoratorImports = ['Provide'];
+                if (deps.length > 0) {
+                    decoratorImports.unshift('ngRequire');
+                }
+                let importCode =
+                    `import {${decoratorImports.join(', ')}} from 'src/base/decorators';`;
 
+                let depsCode = deps.map(dep => {
+                    return `let ${dep} = ngRequire('${dep}');`;
+                }).join('\n');
 
-                let factoryBodyCode = expandCodeRecursive(factoryBody, nodeIdToNode);
-                let tsModuleCode = new JS2TS(moduleName, /return\s+(.*)$/, 1).run(factoryBodyCode);
-                output += tsModuleCode + '\n';
-
+                let factoryBodyCode = new JS2TS(moduleName, /return\s+(.*)$/, 1).run(
+                    expandCodeRecursive(factoryBody, nodeIdToNode)
+                );
+                output += '\n' + importCode + '\n\n' + depsCode + '\n\n' + factoryBodyCode + '\n';
                 factoryFound = true;
                 continue;
             }
