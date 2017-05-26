@@ -142,7 +142,7 @@ class JS2TS {
                 continue;
             }
 
-   //         console.log('unhandled instruction: ', str);
+            //         console.log('unhandled instruction: ', str);
         }
 
         _.forEach(scope, (val, name) => {
@@ -161,7 +161,10 @@ class JS2TS {
         let provideFactory = '';
         if (exportedToken) {
             if (IsVarName(exportedToken)) {
-                if (IsBlockID(scope[exportedToken], Blocks.CLASS)) {
+                if (IsBlockID(scope[exportedToken], Blocks.FUNCTION)) {
+                    exported[exportedToken] = true;
+                    provideFactory = `Provide('${this.moduleName}')(${exportedToken});`;
+                } else if (IsBlockID(scope[exportedToken], Blocks.CLASS)) {
                     exported[exportedToken] = true;
                     annotations[exportedToken] = `@Provide('${this.moduleName}')`;
                 } else if (_.isObject(scope[exportedToken])) {
@@ -174,6 +177,9 @@ class JS2TS {
                             renames[exportedToken] = renames[exportedToken] || {};
                             renames[exportedToken][k] = val;
                         } else if (IsBlockID(val, Blocks.FUNCTION)) {
+                            if (this.IsFunctionUsedAsClass(val)) {
+                                val = this.ConvertToClassBlock(val, k, null);
+                            }
                             scope[k] = val;
                             order.push(k);
                             exported[k] = true;
@@ -181,15 +187,29 @@ class JS2TS {
                             renames[exportedToken] = renames[exportedToken] || {};
                             renames[exportedToken][k] = k;
                         } else {
-                            throw new Error('nested exported object is not yet supported');
+                            scope[k] = val;
+                            order.push(k);
+                            exported[k] = true;
                         }
                     }
                     delete scope[exportedToken];
                     _.pull(order, exportedToken);
                 } else {
-                    throw new Error('Returning a variable that is neither class nor object is not' +
+                    throw new Error('Returning a variable that is neither class/function nor object is not' +
                         'yet supported!');
                 }
+            } else if (IsBlockID(exportedToken, Blocks.FUNCTION)) {
+                if (this.IsFunctionUsedAsClass(exportedToken)) {
+                    exportedToken = this.ConvertToClassBlock(exportedToken, this.moduleName, null);
+                    annotations[this.moduleName] = `@Provide('${this.moduleName}')`;
+                } else {
+                    (this.nodeIdToNode[exportedToken] as FunctionBlock).functionName =
+                        this.moduleName;
+                    provideFactory = `Provide('${this.moduleName}')(${this.moduleName});`;
+                }
+                scope[this.moduleName] = exportedToken;
+                order.push(this.moduleName);
+                exported[this.moduleName] = true;
             } else if (IsBlockID(exportedToken, Blocks.OBJECT)) {
                 let returnedObj = this.expandObject(exportedToken);
                 let allKeys = Object.keys(returnedObj).join(',\n');
@@ -199,16 +219,19 @@ class JS2TS {
                     if (IsVarName(val)) {
                         exported[val] = true;
                     } else if (IsBlockID(val, Blocks.FUNCTION)) {
+                        if (this.IsFunctionUsedAsClass(val)) {
+                            val = this.ConvertToClassBlock(val, k, null);
+                        }
                         scope[k] = val;
                         order.push(k);
                         exported[k] = true;
                         (this.nodeIdToNode[val] as FunctionBlock).functionName = k;
                     } else {
-                        throw new Error('nested exported object is not yet supported');
+                        scope[k] = val;
+                        order.push(k);
+                        exported[k] = true;
                     }
                 }
-            } else {
-                throw new Error('returning function directly is not yet implemented!');
             }
         }
 
@@ -307,7 +330,7 @@ class JS2TS {
             curObj = curObj[prop];
             if (_.isString(curObj)) {
                 if (!IsBlockID(curObj, Blocks.FUNCTION)) {
-                    throw new Error('setting key on something that is neither and object nor function');
+                    throw new Error('setting key on something that is neither an object nor function');
                 }
                 if (!this.functionPlaceholderToObjMap[curObj]) {
                     this.functionPlaceholderToObjMap[curObj] = {prototype: {}};

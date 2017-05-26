@@ -40,37 +40,48 @@ class AngularjsToTypeScript {
                 let roundBlock = nodeIdToNode[match[1]] as SimpleCodeBlock;
                 let stringBlockRegex = GetRegexToMatchBlock(Blocks.STRING).source;
                 let arrBlockRegex = GetRegexToMatchBlock(Blocks.SQUAREBLOCK).source;
+
+                let deps = [], factoryBody = '', moduleName;
+
                 let match2 = roundBlock.code.match(new RegExp(
                     `^\\s*(${stringBlockRegex})\\s*,\\s*(${arrBlockRegex})\\s*$`
                 ));
-                if (!match2) {
-                    throw new Error('invalid format of factory!');
+                if (match2) {
+                    moduleName = AngularjsToTypeScript.stripQuotes(
+                        (nodeIdToNode[match2[1]] as SimpleCodeBlock).code
+                    );
+                    let depsArray = (nodeIdToNode[match2[2]] as SimpleCodeBlock).code
+                        .split(',');
+                    depsArray.forEach((dep, index) => {
+                        dep = dep.trim();
+                        if (index == depsArray.length - 1) {
+                            if (!IsBlockID(dep, Blocks.FUNCTION)) {
+                                throw new Error('invalid format of factory!');
+                            }
+                            factoryBody = (
+                                nodeIdToNode[(nodeIdToNode[dep] as FunctionBlock).bodyID] as SimpleCodeBlock
+                            ).code;
+                        } else {
+                            if (!IsBlockID(dep, Blocks.STRING)) {
+                                throw new Error('invalid format of factory!');
+                            }
+                            deps.push(AngularjsToTypeScript.stripQuotes(
+                                (nodeIdToNode[dep] as SimpleCodeBlock).code
+                            ));
+                        }
+                    });
+                } else {
+                    let funcBlockRegex = GetRegexToMatchBlock(Blocks.FUNCTION).source;
+                    match2 = roundBlock.code.match(new RegExp(
+                        `^\\s*(${stringBlockRegex})\\s*,\\s*(${funcBlockRegex})\\s*$`
+                    ));
+                    moduleName = AngularjsToTypeScript.stripQuotes(
+                        (nodeIdToNode[match2[1]] as SimpleCodeBlock).code
+                    );
+                    factoryBody = (
+                        nodeIdToNode[(nodeIdToNode[match2[2]] as FunctionBlock).bodyID] as SimpleCodeBlock
+                    ).code;
                 }
-
-                let moduleName = AngularjsToTypeScript.stripQuotes(
-                    (nodeIdToNode[match2[1]] as SimpleCodeBlock).code
-                );
-                let depsArray = (nodeIdToNode[match2[2]] as SimpleCodeBlock).code
-                    .split(',');
-                let deps = [], factoryBody = '';
-                depsArray.forEach((dep, index) => {
-                    dep = dep.trim();
-                    if (index == depsArray.length - 1) {
-                        if (!IsBlockID(dep, Blocks.FUNCTION)) {
-                            throw new Error('invalid format of factory!');
-                        }
-                        factoryBody = (
-                            nodeIdToNode[(nodeIdToNode[dep] as FunctionBlock).bodyID] as SimpleCodeBlock
-                        ).code;
-                    } else {
-                        if (!IsBlockID(dep, Blocks.STRING)) {
-                            throw new Error('invalid format of factory!');
-                        }
-                        deps.push(AngularjsToTypeScript.stripQuotes(
-                            (nodeIdToNode[dep] as SimpleCodeBlock).code
-                        ));
-                    }
-                });
 
                 let decoratorImports = ['Provide'];
                 if (deps.length > 0) {

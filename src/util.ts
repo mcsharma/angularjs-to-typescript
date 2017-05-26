@@ -326,7 +326,8 @@ export function minifyCommentsRegexAndStrings(
                     // find next non-escaped /
                     let start = index;
                     index = code.indexOf(ch, index + 1);
-                    while (code.slice(0, index).match(/[\\]*$/)[0].length % 2 == 1) {
+                    while (code[index - 1] === '[' ||
+                            code.slice(0, index).match(/[\\]*$/)[0].length % 2 === 1) {
                         index = code.indexOf(ch, index + 1);
                     }
 
@@ -463,7 +464,7 @@ export function combineBlocksWithHeaders(
             if (keyword != 'else') {
                 let roundMatch = str.match(GetRegexToMatchBlockInBeginning(Blocks.ROUNDBLOCK));
                 if (!roundMatch) {
-                    throw new Error('invalid code 1');
+                    throw new Error('expecting round block after ' + keyword);
                 }
 
                 headerID = roundMatch[0];
@@ -608,7 +609,7 @@ export function expandCodeRecursive(
     while (blockIDs.length > 0) {
         blockIDs.forEach((id) => {
             let node = table[id];
-            code = code.replace(new RegExp(id), expandBlock(node));
+            code = code.replace(new RegExp(id), EscapeDollar(expandBlock(node)));
         });
         blockIDs = extractBlockIDs(code, specificBlockTypes);
     }
