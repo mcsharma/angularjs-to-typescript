@@ -1,19 +1,20 @@
 {
   "name": "angularjs-to-typescript",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "JS module to convert AngularJS factories to TypeScript modules",
   "main": "index.js",
   "bin": "./cli.js",
   "scripts": {
-    "test": "jasmine"
+    "test": "jasmine",
+    "prepublish": "tsc -p ./"
   },
   "author": "mcsharma1990@gmail.com",
   "license": "ISC",
   "dependencies": {
-    "lodash": "^4.17.4",
-    "typescript": "^2.3.2"
+    "lodash": "^4.17.4"
   },
   "devDependencies": {
+    "typescript": "^2.3.2",
     "@types/jasmine": "^2.5.47",
     "@types/lodash": "^4.14.64",
     "@types/node": "^7.0.22",
