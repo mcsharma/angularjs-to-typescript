@@ -16,7 +16,6 @@ var JS2TS = (function () {
         var code = ret.code, codeCopy = code;
         var split;
         var scope = {};
-        var order = [];
         var exportedToken;
         var inheritance = {};
         while (split = util_1.getNextInstruction(codeCopy)) {
@@ -27,6 +26,7 @@ var JS2TS = (function () {
             }
         }
         var currentCommentList = [], lastCommentList = [];
+        var order = 0, orderMap = {}, keysOrder = {};
         while (split = util_1.getNextInstruction(code)) {
             var str = split.instruction;
             code = split.remain;
@@ -50,7 +50,10 @@ var JS2TS = (function () {
                             .functionName = nameAndVal[0];
                         _this.nodeIdToNode[nameAndVal[1]].docs = lastCommentList;
                     }
-                    order.push(nameAndVal[0]);
+                    orderMap[nameAndVal[0]] = util_1.IsBlockID(nameAndVal[1], util_1.Blocks.FUNCTION)
+                        ? Number.POSITIVE_INFINITY
+                        : order + 1;
+                    order++;
                 });
                 continue;
             }
@@ -58,13 +61,19 @@ var JS2TS = (function () {
                 var funcBlock = this.nodeIdToNode[str];
                 funcBlock.docs = lastCommentList;
                 scope[funcBlock.functionName] = str;
-                order.push(funcBlock.functionName);
+                orderMap[funcBlock.functionName] = Number.POSITIVE_INFINITY;
                 continue;
             }
             var match = (/^([\$_\w]+(\.[\$_\w]+)*)\s*=\s*([^;]+)$/).exec(str);
             if (match) {
                 var left = match[1], right = match[3];
                 this.setObjectProps(scope, left, right, lastCommentList);
+                if (left.indexOf('.') === -1) {
+                    orderMap[left] = order++;
+                }
+                else {
+                    keysOrder[left] = order++;
+                }
                 continue;
             }
             match = this.exportRegex.exec(str);
@@ -133,7 +142,7 @@ var JS2TS = (function () {
                                 val = this.ConvertToClassBlock(val, k, null);
                             }
                             scope[k] = val;
-                            order.push(k);
+                            orderMap[k] = Number.POSITIVE_INFINITY;
                             exported[k] = true;
                             this.nodeIdToNode[val].functionName = k;
                             renames[exportedToken] = renames[exportedToken] || {};
@@ -141,14 +150,14 @@ var JS2TS = (function () {
                         }
                         else {
                             scope[k] = val;
-                            order.push(k);
+                            orderMap[k] = keysOrder[exportedToken + '.' + k];
                             exported[k] = true;
                             renames[exportedToken] = renames[exportedToken] || {};
                             renames[exportedToken][k] = k;
                         }
                     }
                     delete scope[exportedToken];
-                    _.pull(order, exportedToken);
+                    delete orderMap[exportedToken];
                 }
                 else {
                     throw new Error('Returning a variable that is neither class/function nor object is not' +
@@ -166,7 +175,7 @@ var JS2TS = (function () {
                     provideFactory = "Provide('" + this.moduleName + "')(" + this.moduleName + ");";
                 }
                 scope[this.moduleName] = exportedToken;
-                order.push(this.moduleName);
+                orderMap[this.moduleName] = Number.POSITIVE_INFINITY;
                 exported[this.moduleName] = true;
             }
             else if (util_1.IsBlockID(exportedToken, util_1.Blocks.OBJECT)) {
@@ -183,26 +192,27 @@ var JS2TS = (function () {
                             val = this.ConvertToClassBlock(val, k, null);
                         }
                         scope[k] = val;
-                        order.push(k);
+                        orderMap[k] = Number.POSITIVE_INFINITY;
                         exported[k] = true;
                         this.nodeIdToNode[val].functionName = k;
                     }
                     else {
                         scope[k] = val;
-                        order.push(k);
+                        orderMap[k] = Number.POSITIVE_INFINITY;
                         exported[k] = true;
                     }
                 }
             }
         }
         var output = '';
-        order.sort(function (name1, name2) {
-            var is1Func = util_1.IsBlockID(scope[name1], util_1.Blocks.CLASS) ||
-                util_1.IsBlockID(scope[name1], util_1.Blocks.FUNCTION);
-            var is2Func = util_1.IsBlockID(scope[name2], util_1.Blocks.CLASS) ||
-                util_1.IsBlockID(scope[name2], util_1.Blocks.FUNCTION);
-            return is1Func && !is2Func ? 1 : -1;
-        }).forEach(function (name) {
+        var ordering = [];
+        for (var varName in orderMap) {
+            ordering.push([varName, orderMap[varName]]);
+        }
+        ordering.sort(function (p1, p2) {
+            return p1[1] - p2[1];
+        }).forEach(function (p) {
+            var name = p[0];
             if (util_1.IsBlockID(scope[name], util_1.Blocks.CLASS)) {
                 output += '\n';
                 if (annotations[name]) {

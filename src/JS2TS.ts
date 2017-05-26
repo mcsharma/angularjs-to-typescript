@@ -38,7 +38,6 @@ class JS2TS {
         let code = ret.code, codeCopy = code;
         let split;
         let scope: any = {};
-        let order = [];
         let exportedToken;
         let inheritance: {[derivedClass: string]: string} = {};
 
@@ -57,6 +56,7 @@ class JS2TS {
         let currentCommentList: string[] = [],
             lastCommentList: string[] = [];
 
+        let order = 0, orderMap = {}, keysOrder = {};
         while (split = getNextInstruction(code)) {
             let str = split.instruction;
             code = split.remain;
@@ -85,7 +85,10 @@ class JS2TS {
                             .functionName = nameAndVal[0];
                         this.nodeIdToNode[nameAndVal[1]].docs = lastCommentList;
                     }
-                    order.push(nameAndVal[0]);
+                    orderMap[nameAndVal[0]] = IsBlockID(nameAndVal[1], Blocks.FUNCTION)
+                        ? Number.POSITIVE_INFINITY
+                        : order + 1;
+                    order++;
                 });
                 continue;
             }
@@ -95,7 +98,7 @@ class JS2TS {
                 let funcBlock = this.nodeIdToNode[str] as FunctionBlock;
                 funcBlock.docs = lastCommentList;
                 scope[funcBlock.functionName] = str;
-                order.push(funcBlock.functionName);
+                orderMap[funcBlock.functionName] = Number.POSITIVE_INFINITY;
                 continue;
             }
 
@@ -106,6 +109,11 @@ class JS2TS {
                 var left = match[1],
                     right = match[3];
                 this.setObjectProps(scope, left, right, lastCommentList);
+                if (left.indexOf('.') === -1) {
+                    orderMap[left] = order++;
+                } else {
+                    keysOrder[left] = order++;
+                }
                 continue;
             }
 
@@ -185,21 +193,21 @@ class JS2TS {
                                 val = this.ConvertToClassBlock(val, k, null);
                             }
                             scope[k] = val;
-                            order.push(k);
+                            orderMap[k] = Number.POSITIVE_INFINITY;
                             exported[k] = true;
                             (this.nodeIdToNode[val] as FunctionBlock).functionName = k;
                             renames[exportedToken] = renames[exportedToken] || {};
                             renames[exportedToken][k] = k;
                         } else {
                             scope[k] = val;
-                            order.push(k);
+                            orderMap[k] = keysOrder[exportedToken + '.' + k];
                             exported[k] = true;
                             renames[exportedToken] = renames[exportedToken] || {};
                             renames[exportedToken][k] = k;
                         }
                     }
                     delete scope[exportedToken];
-                    _.pull(order, exportedToken);
+                    delete orderMap[exportedToken];
                 } else {
                     throw new Error('Returning a variable that is neither class/function nor object is not' +
                         'yet supported!');
@@ -214,7 +222,8 @@ class JS2TS {
                     provideFactory = `Provide('${this.moduleName}')(${this.moduleName});`;
                 }
                 scope[this.moduleName] = exportedToken;
-                order.push(this.moduleName);
+                // Put it at the end
+                orderMap[this.moduleName] = Number.POSITIVE_INFINITY;
                 exported[this.moduleName] = true;
             } else if (IsBlockID(exportedToken, Blocks.OBJECT)) {
                 let returnedObj = this.expandObject(exportedToken);
@@ -229,12 +238,12 @@ class JS2TS {
                             val = this.ConvertToClassBlock(val, k, null);
                         }
                         scope[k] = val;
-                        order.push(k);
+                        orderMap[k] = Number.POSITIVE_INFINITY;
                         exported[k] = true;
                         (this.nodeIdToNode[val] as FunctionBlock).functionName = k;
                     } else {
                         scope[k] = val;
-                        order.push(k);
+                        orderMap[k] = Number.POSITIVE_INFINITY;
                         exported[k] = true;
                     }
                 }
@@ -242,15 +251,14 @@ class JS2TS {
         }
 
         let output = '';
-
-        // Define all the variables first and then classes and functions.
-        order.sort((name1, name2) => {
-            let is1Func = IsBlockID(scope[name1], Blocks.CLASS) ||
-                IsBlockID(scope[name1], Blocks.FUNCTION);
-            let is2Func = IsBlockID(scope[name2], Blocks.CLASS) ||
-                IsBlockID(scope[name2], Blocks.FUNCTION);
-            return is1Func && !is2Func ? 1 : -1;
-        }).forEach((name) => {
+        let ordering = [];
+        for (let varName in orderMap) {
+            ordering.push([varName, orderMap[varName]]);
+        }
+        ordering.sort((p1, p2) => {
+            return p1[1] - p2[1];
+        }).forEach((p) => {
+            let name = p[0];
             if (IsBlockID(scope[name], Blocks.CLASS)) {
                 output += '\n';
                 if (annotations[name]) {
