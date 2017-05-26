@@ -11,5 +11,7 @@ if (!filePath || !filePath.endsWith('.js')) {
 
 var input = fs.readFileSync(filePath, 'UTF-8');
 var out = new AngularjsToTypeScript().run(input);
-
+if (out === -1) {
+    throw new Error('Error converting JS to TS');
+}
 fs.writeFileSync(filePath.slice(0, -3) + '.ts', out);
