@@ -97,6 +97,9 @@ class AngularjsToTypeScript {
                 let factoryBodyCode = new JS2TS(moduleName, /return\s+(.*)$/, 1).run(
                     expandCodeRecursive(factoryBody, nodeIdToNode)
                 );
+                if (factoryBodyCode === -1) {
+                    return -1;
+                }
                 output += '\n' + importCode + '\n\n' + depsCode + '\n\n' + factoryBodyCode + '\n';
                 factoryFound = true;
                 continue;

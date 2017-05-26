@@ -73,6 +73,9 @@ var AngularjsToTypeScript = (function () {
                     return "let " + dep + " = ngRequire('" + dep + "');";
                 }).join('\n');
                 var factoryBodyCode = new JS2TS(moduleName, /return\s+(.*)$/, 1).run(util_1.expandCodeRecursive(factoryBody_1, nodeIdToNode));
+                if (factoryBodyCode === -1) {
+                    return { value: -1 };
+                }
                 output += '\n' + importCode + '\n\n' + depsCode + '\n\n' + factoryBodyCode + '\n';
                 factoryFound = true;
                 return "continue";

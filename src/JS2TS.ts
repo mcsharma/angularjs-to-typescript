@@ -30,7 +30,7 @@ class JS2TS {
     ) {
     }
 
-    public run(input: string) {
+    public run(input: string): string|number {
 
         let ret = processCode(input);
         this.nodeIdToNode = ret.table;
@@ -142,7 +142,11 @@ class JS2TS {
                 continue;
             }
 
-            //         console.log('unhandled instruction: ', str);
+            console.error(
+                'unhandled code found: \n' + expandCodeRecursive(str, this.nodeIdToNode)
+            );
+            console.error('Exiting!');
+            return -1;
         }
 
         _.forEach(scope, (val, name) => {
@@ -190,6 +194,8 @@ class JS2TS {
                             scope[k] = val;
                             order.push(k);
                             exported[k] = true;
+                            renames[exportedToken] = renames[exportedToken] || {};
+                            renames[exportedToken][k] = k;
                         }
                     }
                     delete scope[exportedToken];

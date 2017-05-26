@@ -92,6 +92,9 @@ var JS2TS = (function () {
                 inheritance[params[0]] = params[1];
                 continue;
             }
+            console.error('unhandled code found: \n' + util_1.expandCodeRecursive(str, this.nodeIdToNode));
+            console.error('Exiting!');
+            return -1;
         }
         _.forEach(scope, function (val, name) {
             if (_this.IsFunctionUsedAsClass(val)) {
@@ -140,6 +143,8 @@ var JS2TS = (function () {
                             scope[k] = val;
                             order.push(k);
                             exported[k] = true;
+                            renames[exportedToken] = renames[exportedToken] || {};
+                            renames[exportedToken][k] = k;
                         }
                     }
                     delete scope[exportedToken];
